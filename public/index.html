@@ -87,6 +87,8 @@
             document.getElementById('nid-sign-in-status').textContent = `Signed in as ${displayName}`;
             document.getElementById('nid-sign-in').value = 'Sign out';
 
+            document.getElementById('nid-data-status').textContent = 'Syncing your data now...';
+
             // Get Firebase Database reference.
             let firepadRef = firebase.database().ref();
 
@@ -96,19 +98,43 @@
             // Create Firepad (with rich text toolbar and shortcuts enabled).
             let firepad = Firepad.fromCodeMirror(firepadRef, codeMirror,
               { richTextShortcuts: true, richTextToolbar: true, defaultText: 'Start noting things down...' });
-			//Remove Firepad logo
-            document.getElementsByClassName("powered-by-firepad")[0].outerHTML='';
+
+            firepad.on('ready', function() {
+              //Remove Firepad logo
+              document.getElementsByClassName('powered-by-firepad')[0].outerHTML='';
+
+              //Update status
+              document.getElementById('nid-data-status').textContent = 'Data synced.';
+
+            });
+
+            let nidSynced = true;
+
+            firepad.on('synced', function(isSynced) {
+              // isSynced will be false immediately after the user edits the pad,
+              // and true when their edit has been saved to Firebase.
+              if(nidSynced != isSynced){
+                if(isSynced){
+                  document.getElementById('nid-data-status').textContent = 'Data synced.';
+                }else{
+                  document.getElementById('nid-data-status').textContent = 'Syncing...';
+                }
+                nidSynced = isSynced;
+              }
+            });
+
           } else {
             // User is signed out.
             document.getElementById('nid-sign-in-status').textContent = 'Signed out';
             document.getElementById('nid-sign-in').value = 'Sign in with Google';
-			document.getElementById('note-it-down').innerHTML = '';
+            document.getElementById('note-it-down').innerHTML = '';
           }
           document.getElementById('nid-sign-in').disabled = false;
 
         });
 
         document.getElementById('nid-sign-in').addEventListener('click', toggleSignIn, false);
+
       }
 
       window.onload = function() {
@@ -121,9 +147,14 @@
 <body>
 <main>
 	<h2>Note It Down</h2>
-	<div class="nid-actions">
-		<span id="nid-sign-in-status"></span>&nbsp;|&nbsp;
-		<input type="button" id="nid-sign-in" value="Sign in with Google">
+	<div class="nid-header">
+		<div class="nid-actions">
+			<span id="nid-sign-in-status"></span>&nbsp;|&nbsp;
+			<input type="button" id="nid-sign-in" value="Sign in with Google">
+		</div>
+		<div class="nid-status">
+			<span id="nid-data-status"></span>
+		</div>
 	</div>
 	<div id="note-it-down">
 	</div>
