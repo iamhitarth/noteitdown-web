@@ -1,0 +1,24 @@
+{
+  "rules": {
+    "history": {
+      ".read": "auth != null",
+      "$revision": {
+        /* Allow writing a revision as long as it doesn't already exist and user writes their auth.uid as the 'a' field. */
+        ".write": "data.val() === null && newData.child('a').val() === auth.uid"
+      }
+    },
+    "users": {
+      ".read": "auth != null",
+      "$userid": {
+        /* Allow user to modify their own user info. */
+        ".write": "$userid === auth.uid"
+      }
+    },
+    "checkpoint": {
+      ".read": "auth != null",
+      /* User can write a checkpoint as long as they are writing their auth.uid as the 'a' field and they are the one who
+         wrote the revision that they are checkpointing. */
+      ".write": "newData.child('a').val() === auth.uid && root.child('history').child(newData.child('id').val()).child('a').val() === auth.uid"
+    }
+  }
+}
