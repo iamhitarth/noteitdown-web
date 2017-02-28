@@ -1,12 +1,16 @@
+body{
+    font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+}
+
 #note-it-down{
     width: 95vw;
     height: 85vh;
 }
 
-.nid-actions{
-    float:left;
+.nid-header{
+    display:flex;
 }
 
-.nid-status{
-    float:right;
+.nid-actions{
+    margin-left: auto;
 }

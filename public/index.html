@@ -1,6 +1,8 @@
 <!doctype html>
 <html>
 <head>
+	<link rel="shortcut icon" href="img/favicon.ico" type="image/x-icon">
+	<link rel="icon" href="img/favicon.ico" type="image/x-icon">
 	<meta charset=utf-8 />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Note It Down</title>
@@ -24,122 +26,122 @@
 
 	<!-- Note It Down -->
 	<script type="application/javascript">
-      /**
-       * Function called when clicking the Login/Logout button.
-       */
-      function toggleSignIn() {
-        if (!firebase.auth().currentUser) {
+        /**
+         * Function called when clicking the Login/Logout button.
+         */
+        function toggleSignIn() {
+            if (!firebase.auth().currentUser) {
 
-          let provider = new firebase.auth.GoogleAuthProvider();
+                let provider = new firebase.auth.GoogleAuthProvider();
 
-          provider.addScope('https://www.googleapis.com/auth/plus.login');
+                provider.addScope('https://www.googleapis.com/auth/plus.login');
 
-          firebase.auth().signInWithPopup(provider).then(function(result) {
-            // This gives you a Google Access Token. You can use it to access the Google API.
-            let token = result.credential.accessToken;
-            // The signed-in user info.
-            let user = result.user;
-          }).catch(function(error) {
-            // Handle Errors here.
-            let errorCode = error.code;
-            let errorMessage = error.message;
-            // The email of the user's account used.
-            let email = error.email;
-            // The firebase.auth.AuthCredential type that was used.
-            let credential = error.credential;
+                firebase.auth().signInWithPopup(provider).then(function(result) {
+                    // This gives you a Google Access Token. You can use it to access the Google API.
+                    let token = result.credential.accessToken;
+                    // The signed-in user info.
+                    let user = result.user;
+                }).catch(function(error) {
+                    // Handle Errors here.
+                    let errorCode = error.code;
+                    let errorMessage = error.message;
+                    // The email of the user's account used.
+                    let email = error.email;
+                    // The firebase.auth.AuthCredential type that was used.
+                    let credential = error.credential;
 
-            if (errorCode === 'auth/account-exists-with-different-credential') {
-              alert('You have already signed up with a different auth provider for that email.');
-              // If you are using multiple auth providers on your app you should handle linking
-              // the user's accounts here.
+                    if (errorCode === 'auth/account-exists-with-different-credential') {
+                        alert('You have already signed up with a different auth provider for that email.');
+                        // If you are using multiple auth providers on your app you should handle linking
+                        // the user's accounts here.
+                    } else {
+                        console.error(error);
+                    }
+
+                });
+
             } else {
-              console.error(error);
+                firebase.auth().signOut();
+
             }
-
-          });
-
-        } else {
-          firebase.auth().signOut();
+            document.getElementById('nid-sign-in').disabled = true;
 
         }
-        document.getElementById('nid-sign-in').disabled = true;
 
-      }
+        /**
+         * initApp handles setting up UI event listeners and registering Firebase auth listeners:
+         *  - firebase.auth().onAuthStateChanged: This listener is called when the user is signed in or
+         *    out, and that is where we update the UI.
+         */
+        function initApp() {
+            // Listening for auth state changes.
+            firebase.auth().onAuthStateChanged(function(user) {
+                if (user) {
+                    // User is signed in.
+                    let displayName = user.displayName;
+                    let email = user.email;
+                    let emailVerified = user.emailVerified;
+                    let photoURL = user.photoURL;
+                    let isAnonymous = user.isAnonymous;
+                    let uid = user.uid;
+                    let providerData = user.providerData;
 
-      /**
-       * initApp handles setting up UI event listeners and registering Firebase auth listeners:
-       *  - firebase.auth().onAuthStateChanged: This listener is called when the user is signed in or
-       *    out, and that is where we update the UI.
-       */
-      function initApp() {
-        // Listening for auth state changes.
-        firebase.auth().onAuthStateChanged(function(user) {
-          if (user) {
-            // User is signed in.
-            let displayName = user.displayName;
-            let email = user.email;
-            let emailVerified = user.emailVerified;
-            let photoURL = user.photoURL;
-            let isAnonymous = user.isAnonymous;
-            let uid = user.uid;
-            let providerData = user.providerData;
+                    document.getElementById('nid-sign-in-status').textContent = `Signed in as ${displayName}`;
+                    document.getElementById('nid-sign-in').value = 'Sign out';
 
-            document.getElementById('nid-sign-in-status').textContent = `Signed in as ${displayName}`;
-            document.getElementById('nid-sign-in').value = 'Sign out';
+                    document.getElementById('nid-data-status').textContent = 'Syncing your data now...';
 
-            document.getElementById('nid-data-status').textContent = 'Syncing your data now...';
+                    // Get Firebase Database reference.
+                    let firepadRef = firebase.database().ref();
 
-            // Get Firebase Database reference.
-            let firepadRef = firebase.database().ref();
+                    // Create CodeMirror (with lineWrapping on).
+                    let codeMirror = CodeMirror(document.getElementById('note-it-down'), { lineWrapping: true });
 
-            // Create CodeMirror (with lineWrapping on).
-            let codeMirror = CodeMirror(document.getElementById('note-it-down'), { lineWrapping: true });
+                    // Create Firepad (with rich text toolbar and shortcuts enabled).
+                    let firepad = Firepad.fromCodeMirror(firepadRef, codeMirror,
+                        { richTextShortcuts: true, richTextToolbar: true, defaultText: 'Start noting things down...' });
 
-            // Create Firepad (with rich text toolbar and shortcuts enabled).
-            let firepad = Firepad.fromCodeMirror(firepadRef, codeMirror,
-              { richTextShortcuts: true, richTextToolbar: true, defaultText: 'Start noting things down...' });
+                    //Remove Firepad logo
+                    document.getElementsByClassName('powered-by-firepad')[0].outerHTML='';
 
-            firepad.on('ready', function() {
-              //Remove Firepad logo
-              document.getElementsByClassName('powered-by-firepad')[0].outerHTML='';
+                    firepad.on('ready', function() {
+                        //Update status
+                        document.getElementById('nid-data-status').textContent = 'Data synced.';
 
-              //Update status
-              document.getElementById('nid-data-status').textContent = 'Data synced.';
+                    });
 
-            });
+                    let nidSynced = true;
 
-            let nidSynced = true;
+                    firepad.on('synced', function(isSynced) {
+                        // isSynced will be false immediately after the user edits the pad,
+                        // and true when their edit has been saved to Firebase.
+                        if(nidSynced != isSynced){
+                            if(isSynced){
+                                document.getElementById('nid-data-status').textContent = 'Data synced.';
+                            }else{
+                                document.getElementById('nid-data-status').textContent = 'Syncing...';
+                            }
+                            nidSynced = isSynced;
+                        }
+                    });
 
-            firepad.on('synced', function(isSynced) {
-              // isSynced will be false immediately after the user edits the pad,
-              // and true when their edit has been saved to Firebase.
-              if(nidSynced != isSynced){
-                if(isSynced){
-                  document.getElementById('nid-data-status').textContent = 'Data synced.';
-                }else{
-                  document.getElementById('nid-data-status').textContent = 'Syncing...';
+                } else {
+                    // User is signed out.
+                    document.getElementById('nid-sign-in-status').textContent = 'Signed out';
+                    document.getElementById('nid-sign-in').value = 'Sign in with Google';
+                    document.getElementById('note-it-down').innerHTML = '';
                 }
-                nidSynced = isSynced;
-              }
+                document.getElementById('nid-sign-in').disabled = false;
+
             });
 
-          } else {
-            // User is signed out.
-            document.getElementById('nid-sign-in-status').textContent = 'Signed out';
-            document.getElementById('nid-sign-in').value = 'Sign in with Google';
-            document.getElementById('note-it-down').innerHTML = '';
-          }
-          document.getElementById('nid-sign-in').disabled = false;
+            document.getElementById('nid-sign-in').addEventListener('click', toggleSignIn, false);
 
-        });
+        }
 
-        document.getElementById('nid-sign-in').addEventListener('click', toggleSignIn, false);
-
-      }
-
-      window.onload = function() {
-        initApp();
-      };
+        window.onload = function() {
+            initApp();
+        };
 
 	</script>
 </head>
@@ -148,12 +150,12 @@
 <main>
 	<h2>Note It Down</h2>
 	<div class="nid-header">
+		<div class="nid-status">
+			<span id="nid-data-status"></span>
+		</div>
 		<div class="nid-actions">
 			<span id="nid-sign-in-status"></span>&nbsp;|&nbsp;
 			<input type="button" id="nid-sign-in" value="Sign in with Google">
-		</div>
-		<div class="nid-status">
-			<span id="nid-data-status"></span>
 		</div>
 	</div>
 	<div id="note-it-down">
