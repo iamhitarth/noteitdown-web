@@ -91,40 +91,70 @@
 
             document.getElementById('nid-data-status').textContent = 'Syncing your data now...';
 
-            // Get Firebase Database reference.
-            let firepadRef = firebase.database().ref();
+            let fireDb = firebase.database();
+            let noteRef = null;
 
-            // Create CodeMirror (with lineWrapping on).
-            let codeMirror = CodeMirror(document.getElementById('note-it-down'), { lineWrapping: true });
+            //Find uid in users
+            let nidUser = null;
+            fireDb.ref(`users/${uid}`).once('value').then(snapshot => {
+              nidUser = snapshot.val();
 
-            // Create Firepad (with rich text toolbar and shortcuts enabled).
-            let firepad = Firepad.fromCodeMirror(firepadRef, codeMirror,
-              { richTextShortcuts: true, richTextToolbar: true,
-                defaultText: 'Start noting things down...',
-                'userId' : uid });
+              //If not found
+              if(!nidUser){
+                //Create a new Firepad at /notes/$noteId
+                noteRef = fireDb.ref('notes').push();
 
-            //Remove Firepad logo
-            document.getElementsByClassName('powered-by-firepad')[0].outerHTML='';
+                //Add user to the users list
+                fireDb.ref(`users/${uid}`).set({
+                  lastNote: noteRef.key
+                }).then(() => {
+                  fireDb.ref(`users/${uid}/notes/${noteRef.key}`).set(true);
+                });
 
-            firepad.on('ready', function() {
-              //Update status
-              document.getElementById('nid-data-status').textContent = 'Data synced.';
-
-            });
-
-            let nidSynced = true;
-
-            firepad.on('synced', function(isSynced) {
-              // isSynced will be false immediately after the user edits the pad,
-              // and true when their edit has been saved to Firebase.
-              if(nidSynced != isSynced){
-                if(isSynced){
-                  document.getElementById('nid-data-status').textContent = 'Data synced.';
+              }else{
+                //Retrieve lastNote or note that was created most recently
+                if(nidUser.lastNote){
+                  noteRef = fireDb.ref(`notes/${nidUser.lastNote}`);
+                }else if(nidUser.notes && nidUser.notes.length > 0){
+                  noteRef = fireDb.ref('notes/' + nidUser.notes.pop());
                 }else{
-                  document.getElementById('nid-data-status').textContent = 'Syncing...';
-                }
-                nidSynced = isSynced;
+                  //Create a new Firepad at /notes/$noteId
+                  noteRef = fireDb.ref('notes').push();
+				}
               }
+
+              // Create CodeMirror (with lineWrapping on).
+              let codeMirror = CodeMirror(document.getElementById('note-it-down'), { lineWrapping: true });
+
+              // Create Firepad (with rich text toolbar and shortcuts enabled).
+              let firepad = Firepad.fromCodeMirror(noteRef, codeMirror,
+                { richTextShortcuts: true, richTextToolbar: true,
+                  defaultText: 'Start noting things down...',
+                  'userId' : uid });
+
+              //Remove Firepad logo
+              document.getElementsByClassName('powered-by-firepad')[0].outerHTML='';
+
+              firepad.on('ready', function() {
+                //Update status
+                document.getElementById('nid-data-status').textContent = 'Data synced.';
+
+              });
+
+              let nidSynced = true;
+
+              firepad.on('synced', function(isSynced) {
+                // isSynced will be false immediately after the user edits the pad,
+                // and true when their edit has been saved to Firebase.
+                if(nidSynced != isSynced){
+                  if(isSynced){
+                    document.getElementById('nid-data-status').textContent = 'Data synced.';
+                  }else{
+                    document.getElementById('nid-data-status').textContent = 'Syncing...';
+                  }
+                  nidSynced = isSynced;
+                }
+              });
             });
 
           } else {
