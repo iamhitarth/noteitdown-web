@@ -2,7 +2,7 @@ body{
     font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
 }
 
-#note-it-down, #nid-note-container{
+#nid-note-container{
     width: 95vw;
     height: 85vh;
 }

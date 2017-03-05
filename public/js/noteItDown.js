@@ -5,8 +5,10 @@ var NoteItDown = function(options){
     let $signInButtonId = options.signInButtonId || 'nid-sign-in';
     let $dataStatusLabelId = options.dataStatusLabelId || 'nid-data-status';
     let $newNoteButtonId = options.newNoteButtonId || 'nid-new-note';
+    let $notesListId = options.notesListId || 'nid-notes-list';
     let fireDb = firebase.database();
     let uid = null;
+
     /**
      * Function called when clicking the Login/Logout button.
      */
@@ -43,7 +45,6 @@ var NoteItDown = function(options){
 
         } else {
             firebase.auth().signOut();
-            uid = null;
         }
         document.getElementById($signInButtonId).disabled = true;
 
@@ -109,6 +110,18 @@ var NoteItDown = function(options){
     }
 
     /**
+     * Function for fetching and rendering list of user's notes
+     */
+    function initNotesList(uid){
+        if(uid){
+            let userPostsRef = fireDb.ref(`users/${uid}/notes`);
+            userPostsRef.on('child_added', (data) => {
+                document.getElementById($notesListId).innerHTML += `<li>${data.key}</li>`;
+            });
+        }
+    }
+
+    /**
      * initApp handles setting up UI event listeners and registering Firebase auth listeners:
      *  - firebase.auth().onAuthStateChanged: This listener is called when the user is signed in or
      *    out, and that is where we update the UI.
@@ -161,6 +174,8 @@ var NoteItDown = function(options){
                     }
 
                     initNote(noteRef, uid);
+
+                    initNotesList(uid);
                 });
 
             } else {
@@ -168,6 +183,7 @@ var NoteItDown = function(options){
                 document.getElementById($signInStatusLabelId).textContent = 'Signed out';
                 document.getElementById($signInButtonId).value = 'Sign in with Google';
                 document.getElementById($noteContainerId).innerHTML = '';
+                document.getElementById($notesListId).innerHTML = '';
                 uid = null;
             }
             document.getElementById($signInButtonId).disabled = false;

@@ -32,7 +32,8 @@
             signInStatusLabelId: 'nid-sign-in-status',
             signInButtonId: 'nid-sign-in',
             dataStatusLabelId: 'nid-data-status',
-			newNoteButtonId: 'nid-new-note'
+            newNoteButtonId: 'nid-new-note',
+			notesListId: 'nid-notes-list'
         });
 
         window.onload = function() {
@@ -55,7 +56,12 @@
 				<input type="button" id="nid-sign-in" value="Sign in with Google">
 			</div>
 		</div>
-		<div id="nid-note-container"></div>
+		<div id="nid-notes">
+			<div id="nid-sidebar">
+				<ul id="nid-notes-list"></ul>
+			</div>
+			<div id="nid-note-container"></div>
+		</div>
 	</div>
 </main>
 </body>
