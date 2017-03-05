@@ -116,7 +116,7 @@ var NoteItDown = function(options){
         if(uid){
             let userPostsRef = fireDb.ref(`users/${uid}/notes`);
             userPostsRef.on('child_added', (data) => {
-                document.getElementById($notesListId).innerHTML += `<li>${data.key}</li>`;
+                document.getElementById($notesListId).innerHTML += `<li class="nid-note-item">${data.key}</li>`;
             });
         }
     }
