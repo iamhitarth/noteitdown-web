@@ -59,7 +59,16 @@ var NoteItDown = function(options){
     }
 
     /**
-     * Function called for intializing a note at given ref
+     * Function for updating current user's lastNote
+     */
+    function updateLastNote(noteKey, uid){
+        return fireDb.ref(`users/${uid}`).update({
+            lastNote: noteKey
+        });
+    }
+
+    /**
+     * Function called for intializing a note at given ref for current user
      */
     function initNote(noteKey, uid){
         let noteRef = getNoteRef(noteKey);
@@ -98,6 +107,8 @@ var NoteItDown = function(options){
                 nidSynced = isSynced;
             }
         });
+
+        updateLastNote(noteKey, uid);
     }
 
     /**
@@ -107,9 +118,7 @@ var NoteItDown = function(options){
         //Create a new Firepad at /notes/$noteId
         let noteRef = fireDb.ref('notes').push();
 
-        fireDb.ref(`users/${uid}`).update({
-            lastNote: noteRef.key
-        }).then(() => {
+        updateLastNote(noteRef.key, uid).then(() => {
             fireDb.ref(`users/${uid}/notes/${noteRef.key}`).set(true);
         });
 
