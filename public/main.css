@@ -1,16 +1,42 @@
 body{
     font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+    background-color: whitesmoke;
+    margin: 0;
 }
 
 #nid-note-container{
-    width: 95vw;
-    height: 85vh;
+    width: 100vw;
+    height: 95vh;
+}
+
+.nid-header, #nid-notes{
+    display:flex;
 }
 
 .nid-header{
-    display:flex;
+    padding: 1% 0.5%;
+    border-bottom: solid 0.5px #ccc;
 }
 
 .nid-actions{
     margin-left: auto;
+}
+
+#nid-sidebar{
+    flex-basis: 15%;
+    font-size: 0.9em;
+    height: 95vh;
+    border-right: solid 0.5px #ccc;
+}
+
+#nid-notes-list{
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+#nid-notes-list li{
+    padding: 4% 4% 4% 1%;
+    border-bottom: solid 0.5px #ccc;
+    cursor: pointer;
 }
