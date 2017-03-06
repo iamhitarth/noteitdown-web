@@ -6,6 +6,7 @@ var NoteItDown = function(options){
     let $dataStatusLabelId = options.dataStatusLabelId || 'nid-data-status';
     let $newNoteButtonId = options.newNoteButtonId || 'nid-new-note';
     let $notesListId = options.notesListId || 'nid-notes-list';
+    let $noteItemLinkClass = options.noteItemLinkClass || 'nid-note-item-link';
     let fireDb = firebase.database();
     let uid = null;
 
@@ -51,9 +52,18 @@ var NoteItDown = function(options){
     }
 
     /**
+     * Function for getting reference to note with given key
+     */
+    function getNoteRef(noteKey){
+        return fireDb.ref(`notes/${noteKey}`);
+    }
+
+    /**
      * Function called for intializing a note at given ref
      */
-    function initNote(noteRef, uid){
+    function initNote(noteKey, uid){
+        let noteRef = getNoteRef(noteKey);
+
         // Create CodeMirror (with lineWrapping on) - after ensuring the container is empty.
         let noteContainer = document.getElementById($noteContainerId);
         noteContainer.innerHTML = "";
@@ -104,7 +114,7 @@ var NoteItDown = function(options){
         });
 
         //Initialize it
-        initNote(noteRef, uid);
+        initNote(noteRef.key, uid);
 
         return noteRef;
     }
@@ -116,7 +126,18 @@ var NoteItDown = function(options){
         if(uid){
             let userPostsRef = fireDb.ref(`users/${uid}/notes`);
             userPostsRef.on('child_added', (data) => {
-                document.getElementById($notesListId).innerHTML += `<li class="nid-note-item">${data.key}</li>`;
+                let notesList = document.getElementById($notesListId);
+                let noteItem = document.createElement('li');
+                let noteLink = document.createElement('a');
+                noteItem.className += 'nid-note-item';
+                noteLink.className += 'nid-note-item-link';
+                noteLink.href = '#';
+                noteLink.innerText = data.key;
+                noteItem.appendChild(noteLink);
+                noteItem.addEventListener('click', (e) => {
+                    return initNote(e.srcElement.innerText, uid);
+                }, false);
+                notesList.appendChild(noteItem);
             });
         }
     }
@@ -155,9 +176,9 @@ var NoteItDown = function(options){
                     if (nidUser) {
                         //Retrieve lastNote or note that was created most recently
                         if (nidUser.lastNote) {
-                            noteRef = fireDb.ref(`notes/${nidUser.lastNote}`);
+                            noteRef = getNoteRef(nidUser.lastNote);
                         } else if (nidUser.notes && nidUser.notes.length > 0) {	// TODO Fix this as notes is not an array
-                            noteRef = fireDb.ref('notes/' + nidUser.notes.pop());
+                            noteRef = getNoteRef(nidUser.notes.pop());
                         } else {
                             //Create a new Firepad at /notes/$noteId
                             noteRef = fireDb.ref('notes').push();
@@ -173,7 +194,7 @@ var NoteItDown = function(options){
                         });
                     }
 
-                    initNote(noteRef, uid);
+                    initNote(noteRef.key, uid);
 
                     initNotesList(uid);
                 });
@@ -191,7 +212,7 @@ var NoteItDown = function(options){
         });
 
         document.getElementById($signInButtonId).addEventListener('click', toggleSignIn, false);
-        document.getElementById($newNoteButtonId).addEventListener('click', createNewNote, false)
+        document.getElementById($newNoteButtonId).addEventListener('click', createNewNote, false);
     }
 
     return {
