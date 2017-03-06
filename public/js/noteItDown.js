@@ -68,7 +68,7 @@ var NoteItDown = function(options){
     }
 
     /**
-     * Function called for intializing a note at given ref for current user
+     * Function called for initializing a note at given ref for current user
      */
     function initNote(noteKey, uid){
         let noteRef = getNoteRef(noteKey);
@@ -134,8 +134,9 @@ var NoteItDown = function(options){
     function initNotesList(uid){
         if(uid){
             let userPostsRef = fireDb.ref(`users/${uid}/notes`);
+            let notesList = document.getElementById($notesListId);
+            notesList.innerHTML = '';
             userPostsRef.on('child_added', (data) => {
-                let notesList = document.getElementById($notesListId);
                 let noteItem = document.createElement('li');
                 let noteLink = document.createElement('a');
                 noteItem.className += 'nid-note-item';
