@@ -143,6 +143,7 @@ var NoteItDown = function(options){
         noteLink.className += 'nid-note-item-link';
         noteLink.href = '#';
         noteLink.innerText = data.key;
+        noteItem.id = data.key;
         noteItem.appendChild(noteLink);
         noteItem.addEventListener('click', (e) => {
           return initNote(e.srcElement.innerText, uid);
@@ -193,6 +194,7 @@ var NoteItDown = function(options){
               //Create a new Firepad at /notes/$noteId
               noteRef = fireDb.ref('notes').push();
             }
+
           } else {
             noteRef = createNewNote(fireDb, uid);
 
@@ -206,7 +208,16 @@ var NoteItDown = function(options){
 
           initNote(noteRef.key, uid);
 
-          initNotesList(uid);
+          //initNotesList(uid);
+
+          //Setup event listeners on user data
+          fireDb.ref(`users/${uid}/lastNote`).on('value', (data) => {
+            initNotesList(uid);
+            let noteItem = document.getElementById(data.val());
+            if(noteItem){
+              noteItem.className += ' selected-note';
+            }
+          });
 
           document.getElementById($newNoteButtonId).disabled = false;
         });
