@@ -131,7 +131,7 @@ var NoteItDown = function(options){
   /**
    * Function for fetching and rendering list of user's notes
    */
-  function initNotesList(uid){
+  function initNotesList(highlightNoteKey, uid){
     if(uid){
       let userPostsRef = fireDb.ref(`users/${uid}/notes`);
       let notesList = document.getElementById($notesListId);
@@ -144,6 +144,9 @@ var NoteItDown = function(options){
         noteLink.href = '#';
         noteLink.innerText = data.key;
         noteItem.id = data.key;
+        if(highlightNoteKey == data.key){
+            noteItem.className += ' selected-note';
+        }
         noteItem.appendChild(noteLink);
         noteItem.addEventListener('click', (e) => {
           return initNote(e.srcElement.innerText, uid);
@@ -208,15 +211,9 @@ var NoteItDown = function(options){
 
           initNote(noteRef.key, uid);
 
-          //initNotesList(uid);
-
           //Setup event listeners on user data
           fireDb.ref(`users/${uid}/lastNote`).on('value', (data) => {
-            initNotesList(uid);
-            let noteItem = document.getElementById(data.val());
-            if(noteItem){
-              noteItem.className += ' selected-note';
-            }
+            initNotesList(data.val(), uid);
           });
 
           document.getElementById($newNoteButtonId).disabled = false;
