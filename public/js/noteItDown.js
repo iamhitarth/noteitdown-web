@@ -87,9 +87,17 @@ var NoteItDown = function(options){
     //Remove Firepad logo
     document.getElementsByClassName('powered-by-firepad')[0].outerHTML='';
 
-    note.on('ready', function() {
+    note.on('ready', () => {
       //Update status
       document.getElementById($dataStatusLabelId).textContent = 'Data synced.';
+
+      //Setup note update event handler
+      noteRef.child('history').on('child_added', (snapshot) => {
+        //Content for note changed, update note name if beginning of note changed
+        if(snapshot.val().o[0] < 25){
+          noteRef.update({ name: `${note.getText().substr(0, 20)}...` });
+        }
+      });
 
     });
 
@@ -109,6 +117,8 @@ var NoteItDown = function(options){
     });
 
     updateLastNote(noteKey, uid);
+
+    return noteRef;
   }
 
   /**
@@ -133,10 +143,10 @@ var NoteItDown = function(options){
    */
   function initNotesList(highlightNoteKey, uid){
     if(uid){
-      let userPostsRef = fireDb.ref(`users/${uid}/notes`);
+      let userNotesRef = fireDb.ref(`users/${uid}/notes`);
       let notesList = document.getElementById($notesListId);
       notesList.innerHTML = '';
-      userPostsRef.on('child_added', (data) => {
+      userNotesRef.on('child_added', (data) => {
         let noteItem = document.createElement('li');
         let noteLink = document.createElement('a');
         noteItem.className += 'nid-note-item';
@@ -145,7 +155,7 @@ var NoteItDown = function(options){
         noteLink.innerText = data.key;
         noteItem.id = data.key;
         if(highlightNoteKey == data.key){
-            noteItem.className += ' selected-note';
+          noteItem.className += ' selected-note';
         }
         noteItem.appendChild(noteLink);
         noteItem.addEventListener('click', (e) => {
@@ -212,8 +222,8 @@ var NoteItDown = function(options){
           initNote(noteRef.key, uid);
 
           //Setup event listeners on user data
-          fireDb.ref(`users/${uid}/lastNote`).on('value', (data) => {
-            initNotesList(data.val(), uid);
+          fireDb.ref(`users/${uid}/lastNote`).on('value', (snapshot) => {
+            initNotesList(snapshot.val(), uid);
           });
 
           document.getElementById($newNoteButtonId).disabled = false;
