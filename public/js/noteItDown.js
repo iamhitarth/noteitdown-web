@@ -6,7 +6,10 @@ var NoteItDown = function(options){
   let $dataStatusLabelId = options.dataStatusLabelId || 'nid-data-status';
   let $newNoteButtonId = options.newNoteButtonId || 'nid-new-note';
   let $notesListId = options.notesListId || 'nid-notes-list';
+  let $noteItemClass = options.noteItemClass || 'nid-note-item';
   let $noteItemLinkClass = options.noteItemLinkClass || 'nid-note-item-link';
+
+  let noteNameLength = 22;
   let fireDb = firebase.database();
   let uid = null;
 
@@ -94,8 +97,8 @@ var NoteItDown = function(options){
       //Setup note update event handler
       noteRef.child('history').on('child_added', (snapshot) => {
         //Content for note changed, update note name if beginning of note changed
-        if(snapshot.val().o[0] < 25){
-          noteRef.update({ name: `${note.getText().substr(0, 20)}...` });
+        if(snapshot.val().o[0] < noteNameLength){
+          noteRef.update({ name: `${note.getText().substr(0, noteNameLength).replace(/\n/g, ' ')}...` });
         }
       });
 
@@ -146,22 +149,29 @@ var NoteItDown = function(options){
       let userNotesRef = fireDb.ref(`users/${uid}/notes`);
       let notesList = document.getElementById($notesListId);
       notesList.innerHTML = '';
+
       userNotesRef.on('child_added', (data) => {
         let noteItem = document.createElement('li');
-        let noteLink = document.createElement('a');
-        noteItem.className += 'nid-note-item';
-        noteLink.className += 'nid-note-item-link';
-        noteLink.href = '#';
-        noteLink.innerText = data.key;
+        noteItem.className += $noteItemClass;
         noteItem.id = data.key;
+
         if(highlightNoteKey == data.key){
           noteItem.className += ' selected-note';
         }
-        noteItem.appendChild(noteLink);
+
         noteItem.addEventListener('click', (e) => {
-          return initNote(e.srcElement.innerText, uid);
+          return initNote(e.srcElement.id, uid);
         }, false);
+
         notesList.appendChild(noteItem);
+
+        //Setup note name update handler
+        getNoteRef(data.key).child('name').on('value', (snapshot) => {
+          if(snapshot.val()){
+            document.getElementById(data.key).innerText = snapshot.val();
+          }
+        });
+
       });
     }
   }

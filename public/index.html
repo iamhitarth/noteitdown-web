@@ -27,19 +27,20 @@
 	<!-- Note It Down -->
 	<script src="js/noteItDown.js"></script>
 	<script type="application/javascript">
-        let nid = new NoteItDown({
-            noteContainerId: 'nid-note-container',
-            signInStatusLabelId: 'nid-sign-in-status',
-            signInButtonId: 'nid-sign-in',
-            dataStatusLabelId: 'nid-data-status',
-            newNoteButtonId: 'nid-new-note',
-            notesListId: 'nid-notes-list',
-            noteItemLinkClass: 'nid-note-item-link'
-        });
+      let nid = new NoteItDown({
+        noteContainerId: 'nid-note-container',
+        signInStatusLabelId: 'nid-sign-in-status',
+        signInButtonId: 'nid-sign-in',
+        dataStatusLabelId: 'nid-data-status',
+        newNoteButtonId: 'nid-new-note',
+        notesListId: 'nid-notes-list',
+        noteItemClass: 'nid-note-item',
+        noteItemLinkClass: 'nid-note-item-link'
+      });
 
-        window.onload = function() {
-            nid.init();
-        };
+      window.onload = function() {
+        nid.init();
+      };
 	</script>
 </head>
 
