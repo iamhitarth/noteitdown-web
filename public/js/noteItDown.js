@@ -1,3 +1,4 @@
+"use strict";
 var NoteItDown = function(options){
 
   let $noteContainerId = options.noteContainerId || 'note-it-down';
@@ -7,7 +8,6 @@ var NoteItDown = function(options){
   let $newNoteButtonId = options.newNoteButtonId || 'nid-new-note';
   let $notesListId = options.notesListId || 'nid-notes-list';
   let $noteItemClass = options.noteItemClass || 'nid-note-item';
-  let $noteItemLinkClass = options.noteItemLinkClass || 'nid-note-item-link';
 
   let noteNameLength = 22;
   let fireDb = firebase.database();
@@ -62,6 +62,13 @@ var NoteItDown = function(options){
   }
 
   /**
+   * Function for getting reference to note with given key from user's notes list
+   */
+  function getUserNoteRef(noteKey, uid){
+    return fireDb.ref(`users/${uid}/notes/${noteKey}`);
+  }
+
+  /**
    * Function for updating current user's lastNote
    */
   function updateLastNote(noteKey, uid){
@@ -95,11 +102,13 @@ var NoteItDown = function(options){
       document.getElementById($dataStatusLabelId).textContent = 'Data synced.';
 
       //Setup note update event handler
-      noteRef.child('history').on('child_added', (snapshot) => {
+      noteRef.child('history').limitToLast(1).on('child_added', (snapshot) => {
         //Content for note changed, update note name if beginning of note changed
         if(snapshot.val().o[0] < noteNameLength){
           noteRef.update({ name: `${note.getText().substr(0, noteNameLength).replace(/\n/g, ' ')}...` });
         }
+        //Set last modified date in user's notes list
+        getUserNoteRef(noteRef.key, uid).set(-1 * snapshot.val().t);  //*-1 because Firebase doesn't allow sorting in desc
       });
 
     });
@@ -127,12 +136,12 @@ var NoteItDown = function(options){
   /**
    * Function called for creating and initializing a new note
    */
-  function createNewNote(){
+  function createNewNote(uid){
     //Create a new Firepad at /notes/$noteId
     let noteRef = fireDb.ref('notes').push();
 
     updateLastNote(noteRef.key, uid).then(() => {
-      fireDb.ref(`users/${uid}/notes/${noteRef.key}`).set(true);
+      getUserNoteRef(noteRef.key, uid).set(Date.now());
     });
 
     //Initialize it
@@ -150,7 +159,7 @@ var NoteItDown = function(options){
       let notesList = document.getElementById($notesListId);
       notesList.innerHTML = '';
 
-      userNotesRef.on('child_added', (data) => {
+      userNotesRef.orderByValue().on('child_added', (data) => {
         let noteItem = document.createElement('li');
         noteItem.className += $noteItemClass;
         noteItem.id = data.key;
@@ -219,14 +228,9 @@ var NoteItDown = function(options){
             }
 
           } else {
-            noteRef = createNewNote(fireDb, uid);
+            //Create new note for user
+            noteRef = createNewNote(uid);
 
-            //Add user to the users list
-            fireDb.ref(`users/${uid}`).set({
-              lastNote: noteRef.key
-            }).then(() => {
-              fireDb.ref(`users/${uid}/notes/${noteRef.key}`).set(true);
-            });
           }
 
           initNote(noteRef.key, uid);
