@@ -114,6 +114,9 @@ var NoteItDown = function(options){
         initNotesList(noteRef.key, uid);
       });
 
+      //Focus on the note and set cursor to end of any text in the note
+      codeMirror.focus();
+      codeMirror.setCursor(codeMirror.lineCount(), 0);
     });
 
     let nidSynced = true;
@@ -139,7 +142,7 @@ var NoteItDown = function(options){
   /**
    * Function called for creating and initializing a new note
    */
-  function createNewNote(uid){
+  function createNewNote(){
     //Create a new Firepad at /notes/$noteId
     let noteRef = fireDb.ref('notes').push();
 
@@ -232,7 +235,7 @@ var NoteItDown = function(options){
 
           } else {
             //Create new note for user
-            noteRef = createNewNote(uid);
+            noteRef = createNewNote();
 
           }
 
