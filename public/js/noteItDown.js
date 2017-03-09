@@ -109,6 +109,9 @@ var NoteItDown = function(options){
         }
         //Set last modified date in user's notes list
         getUserNoteRef(noteRef.key, uid).set(-1 * snapshot.val().t);  //*-1 because Firebase doesn't allow sorting in desc
+
+        //TODO Debounce this to ensure it doesn't get hit too often
+        initNotesList(noteRef.key, uid);
       });
 
     });
