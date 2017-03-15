@@ -1,5 +1,5 @@
-"use strict";
 var NoteItDown = function(options){
+  "use strict";
 
   let $noteContainerId = options.noteContainerId || 'note-it-down';
   let $signInStatusLabelId = options.signInStatusLabelId || 'nid-sign-in-status';
@@ -12,6 +12,7 @@ var NoteItDown = function(options){
   let noteNameLength = 22;
   let fireDb = firebase.database();
   let uid = null;
+  let currentNote = null;
 
   /**
    * Function called when clicking the Login/Logout button.
@@ -93,6 +94,8 @@ var NoteItDown = function(options){
       { richTextShortcuts: true, richTextToolbar: true,
         defaultText: 'Start noting things down...',
         'userId' : uid });
+
+    currentNote = note;
 
     //Remove Firepad logo
     document.getElementsByClassName('powered-by-firepad')[0].outerHTML='';
@@ -178,6 +181,9 @@ var NoteItDown = function(options){
         }
 
         noteItem.addEventListener('click', (e) => {
+          if(currentNote){
+            currentNote.dispose();
+          }
           return initNote(e.srcElement.id, uid);
         }, false);
 
