@@ -136,6 +136,9 @@ var NoteItDown = function(options){
 
     updateLastNote(noteKey, uid);
 
+    //Cancel Firepad's onDisconnect behavior that deletes users
+    fireDb.ref(`notes/${noteKey}/users`).onDisconnect().cancel();
+
     return noteRef;
   }
 
