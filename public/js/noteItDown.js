@@ -235,8 +235,6 @@ var NoteItDown = function(options){
             //Retrieve lastNote or note that was created most recently
             if (nidUser.lastNote) {
               noteRef = getNoteRef(nidUser.lastNote);
-            } else if (nidUser.notes && nidUser.notes.length > 0) {	// TODO Fix this as notes is not an array
-              noteRef = getNoteRef(nidUser.notes.pop());
             } else {
               //Create a new Firepad at /notes/$noteId
               noteRef = fireDb.ref('notes').push();
