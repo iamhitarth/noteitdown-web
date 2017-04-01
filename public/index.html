@@ -24,6 +24,9 @@
 	<link rel="stylesheet" href="https://cdn.firebase.com/libs/firepad/1.4.0/firepad.css" />
 	<script src="https://cdn.firebase.com/libs/firepad/1.4.0/firepad.min.js"></script>
 
+	<!-- ElasticLunr -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/elasticlunr/0.9.5/elasticlunr.min.js"></script>
+
 	<!-- Note It Down -->
 	<script src="js/noteItDown.js"></script>
 	<script type="application/javascript">
@@ -35,7 +38,7 @@
         newNoteButtonId: 'nid-new-note',
         notesListId: 'nid-notes-list',
         noteItemClass: 'nid-note-item'
-      });
+      }, elasticlunr);
 
       window.onload = function() {
         nid.init();

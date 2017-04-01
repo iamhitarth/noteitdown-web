@@ -1,4 +1,4 @@
-var NoteItDown = function(options){
+var NoteItDown = function(options, elasticlunr){
   "use strict";
 
   let $noteContainerId = options.noteContainerId || 'note-it-down';
@@ -13,6 +13,7 @@ var NoteItDown = function(options){
   let fireDb = firebase.database();
   let uid = null;
   let currentNote = null;
+  let elunrIndex = null;
 
   /**
    * Function called when clicking the Login/Logout button.
@@ -254,6 +255,34 @@ var NoteItDown = function(options){
           });
 
           document.getElementById($newNoteButtonId).disabled = false;
+
+          //Get or create search index
+          fireDb.ref(`users/${uid}/searchIndex`).on('value', (snapshot) => {
+            if(snapshot.val()){
+              elunrIndex = elasticlunr.Index.load(JSON.parse(snapshot.val()));
+              //TODO Wire up search index so that it can be used
+            }else{
+              //Create new index
+              elunrIndex = elasticlunr(function(){
+                this.addField('noteText');
+                this.setRef('noteRef');
+              });
+              //For each of the user's notes
+              fireDb.ref(`users/${uid}/notes`).on('child_added', (snapshot) => {
+                let headless = new Firepad.Headless(fireDb.ref(`notes/${snapshot.key}`));
+                headless.getText((text) => {
+                  elunrIndex.addDoc({
+                    'noteRef': snapshot.key,
+                    'noteText': text
+                  });
+                  headless.dispose();
+
+                  //Store the index in Firebase
+                  fireDb.ref(`users/${uid}/searchIndex`).set(JSON.stringify(elunrIndex.toJSON()));
+                });
+              });
+            }
+          });
         });
 
       } else {
