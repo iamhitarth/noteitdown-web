@@ -48,3 +48,12 @@ body{
     #nid-notes-list li.selected-note{
         background-color: gold;
     }
+
+.search-container{
+    padding: 4% 4% 4% 2%;
+    text-align: center;
+    }
+    .search-container #search-box{
+        width:99%;
+        font-size: 0.9em;
+    }
