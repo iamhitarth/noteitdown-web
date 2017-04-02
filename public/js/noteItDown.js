@@ -16,6 +16,27 @@ var NoteItDown = function(options, elasticlunr){
   let elunrIndex = null;
 
   /**
+   * Returns a function, that, as long as it continues to be invoked, will not
+   * be triggered. The function will be called after it stops being called for
+   * N milliseconds. If `immediate` is passed, trigger the function on the
+   * leading edge, instead of the trailing.
+  */
+  function debounce(func, wait, immediate) {
+    var timeout;
+    return function() {
+      var context = this, args = arguments;
+      var later = function() {
+        timeout = null;
+        if (!immediate) func.apply(context, args);
+      };
+      var callNow = immediate && !timeout;
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+      if (callNow) func.apply(context, args);
+    };
+  }
+
+  /**
    * Function called when clicking the Login/Logout button.
    */
   function toggleSignIn() {
@@ -259,8 +280,15 @@ var NoteItDown = function(options, elasticlunr){
           //Get or create search index
           fireDb.ref(`users/${uid}/searchIndex`).on('value', (snapshot) => {
             if(snapshot.val()){
+              //Set the index
               elunrIndex = elasticlunr.Index.load(JSON.parse(snapshot.val()));
-              //TODO Wire up search index so that it can be used
+
+              //Wire up search
+              let searchBox = document.getElementById('search-box');
+              searchBox.addEventListener('keyup', debounce((e) => {
+                let results = elunrIndex.search(e.target.value);
+                console.log(results);
+              }, 500));
             }else{
               //Create new index
               elunrIndex = elasticlunr(function(){
