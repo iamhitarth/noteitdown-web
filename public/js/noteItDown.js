@@ -8,6 +8,8 @@ var NoteItDown = function(options, elasticlunr){
   let $newNoteButtonId = options.newNoteButtonId || 'nid-new-note';
   let $notesListId = options.notesListId || 'nid-notes-list';
   let $noteItemClass = options.noteItemClass || 'nid-note-item';
+  let $searchResultsListId = options.searchResultsListId || 'nid-search-results-list';
+  let $searchBoxId = options.searchBoxId || 'search-box';
 
   let noteNameLength = 22;
   let fireDb = firebase.database();
@@ -20,7 +22,7 @@ var NoteItDown = function(options, elasticlunr){
    * be triggered. The function will be called after it stops being called for
    * N milliseconds. If `immediate` is passed, trigger the function on the
    * leading edge, instead of the trailing.
-  */
+   */
   function debounce(func, wait, immediate) {
     var timeout;
     return function() {
@@ -135,13 +137,14 @@ var NoteItDown = function(options, elasticlunr){
         //Set last modified date in user's notes list
         getUserNoteRef(noteRef.key, uid).set(-1 * snapshot.val().t);  //*-1 because Firebase doesn't allow sorting in desc
 
-        //TODO Debounce this to ensure it doesn't get hit too often
-        initNotesList(noteRef.key, uid);
+        //Required to ensure name and order change reflects in list of notes
+        debounce(initNotesList, 500)(noteRef.key, uid);
       });
 
       //Focus on the note and set cursor to end of any text in the note
       codeMirror.focus();
-      codeMirror.setCursor(codeMirror.lineCount(), 0);
+      //Commenting this out because this setting cursor to the end feels a bit annoying
+      //codeMirror.setCursor(codeMirror.lineCount(), 0);
     });
 
     let nidSynced = true;
@@ -187,11 +190,11 @@ var NoteItDown = function(options, elasticlunr){
   /**
    * Function for adding a note to the notes list (sidebar)
    */
-  function addToNotesList(userNoteRef, isHighlighted){
-    let notesList = document.getElementById($notesListId);
+  function addToNotesList(userNoteRef, notesListId = $notesListId, isHighlighted){
+    let notesList = document.getElementById(notesListId);
     let noteItem = document.createElement('li');
     noteItem.className += $noteItemClass;
-    noteItem.id = userNoteRef.key;
+    noteItem.dataset.key = userNoteRef.key;
 
     if(isHighlighted){
       noteItem.className += ' selected-note';
@@ -201,7 +204,7 @@ var NoteItDown = function(options, elasticlunr){
       if(currentNote){
         currentNote.dispose();
       }
-      return initNote(e.srcElement.id, uid);
+      return initNote(e.target.dataset.key, uid);
     }, false);
 
     notesList.appendChild(noteItem);
@@ -209,7 +212,7 @@ var NoteItDown = function(options, elasticlunr){
     //Setup note name update handler
     getNoteRef(userNoteRef.key).child('name').on('value', (snapshot) => {
       if(snapshot.val()){
-        document.getElementById(userNoteRef.key).innerText = snapshot.val();
+        notesList.querySelector(`[data-key='${userNoteRef.key}']`).innerText = snapshot.val();
       }
     });
 
@@ -225,7 +228,7 @@ var NoteItDown = function(options, elasticlunr){
       notesList.innerHTML = '';
 
       userNotesRef.orderByValue().on('child_added', (userNoteRef) => {
-        addToNotesList(userNoteRef, highlightNoteKey == userNoteRef.key);
+        addToNotesList(userNoteRef, $notesListId, highlightNoteKey == userNoteRef.key);
       });
     }
   }
@@ -292,10 +295,25 @@ var NoteItDown = function(options, elasticlunr){
               elunrIndex = elasticlunr.Index.load(JSON.parse(snapshot.val()));
 
               //Wire up search
-              let searchBox = document.getElementById('search-box');
+              let notesList = document.getElementById($notesListId);
+              let searchResultsList = document.getElementById($searchResultsListId);
+              let searchBox = document.getElementById($searchBoxId);
               searchBox.addEventListener('keyup', debounce((e) => {
-                let results = elunrIndex.search(e.target.value);
-                console.log(results);
+                let searchStr = e.target.value.trim();
+                if(searchStr.length > 1){
+                  let results = elunrIndex.search(searchStr);
+                  notesList.style.display = 'none';
+                  searchResultsList.innerHTML = '';
+                  searchResultsList.style.display = 'block';
+                  results.forEach((result) => {
+                    addToNotesList(fireDb.ref(`users/${uid}/notes/${result.ref}`), $searchResultsListId,
+                      currentNote.firebaseAdapter_.ref_.key == result.ref);
+                  });
+                }else{
+                  notesList.style.display = 'block';
+                  searchResultsList.style.display = 'none';
+                  initNotesList(currentNote.firebaseAdapter_.ref_.key, uid);
+                }
               }, 500));
             }else{
               //Create new index

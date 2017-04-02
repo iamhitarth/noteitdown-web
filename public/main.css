@@ -29,23 +29,23 @@ body{
     border-right: solid 0.5px #ccc;
 }
 
-#nid-notes-list{
+.notes-list{
     list-style-type: none;
     padding: 0;
     margin: 0;
 }
 
-#nid-notes-list li{
+.notes-list li{
     padding: 4% 4% 4% 1%;
     border-bottom: solid 0.5px #ccc;
     cursor: pointer;
 }
-    #nid-notes-list li a{
+    .notes-list li a{
         text-decoration: none;
         color: inherit;
     }
 
-    #nid-notes-list li.selected-note{
+    .notes-list li.selected-note{
         background-color: gold;
     }
 
