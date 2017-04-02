@@ -185,6 +185,37 @@ var NoteItDown = function(options, elasticlunr){
   }
 
   /**
+   * Function for adding a note to the notes list (sidebar)
+   */
+  function addToNotesList(userNoteRef, isHighlighted){
+    let notesList = document.getElementById($notesListId);
+    let noteItem = document.createElement('li');
+    noteItem.className += $noteItemClass;
+    noteItem.id = userNoteRef.key;
+
+    if(isHighlighted){
+      noteItem.className += ' selected-note';
+    }
+
+    noteItem.addEventListener('click', (e) => {
+      if(currentNote){
+        currentNote.dispose();
+      }
+      return initNote(e.srcElement.id, uid);
+    }, false);
+
+    notesList.appendChild(noteItem);
+
+    //Setup note name update handler
+    getNoteRef(userNoteRef.key).child('name').on('value', (snapshot) => {
+      if(snapshot.val()){
+        document.getElementById(userNoteRef.key).innerText = snapshot.val();
+      }
+    });
+
+  }
+
+  /**
    * Function for fetching and rendering list of user's notes
    */
   function initNotesList(highlightNoteKey, uid){
@@ -193,31 +224,8 @@ var NoteItDown = function(options, elasticlunr){
       let notesList = document.getElementById($notesListId);
       notesList.innerHTML = '';
 
-      userNotesRef.orderByValue().on('child_added', (data) => {
-        let noteItem = document.createElement('li');
-        noteItem.className += $noteItemClass;
-        noteItem.id = data.key;
-
-        if(highlightNoteKey == data.key){
-          noteItem.className += ' selected-note';
-        }
-
-        noteItem.addEventListener('click', (e) => {
-          if(currentNote){
-            currentNote.dispose();
-          }
-          return initNote(e.srcElement.id, uid);
-        }, false);
-
-        notesList.appendChild(noteItem);
-
-        //Setup note name update handler
-        getNoteRef(data.key).child('name').on('value', (snapshot) => {
-          if(snapshot.val()){
-            document.getElementById(data.key).innerText = snapshot.val();
-          }
-        });
-
+      userNotesRef.orderByValue().on('child_added', (userNoteRef) => {
+        addToNotesList(userNoteRef, highlightNoteKey == userNoteRef.key);
       });
     }
   }
