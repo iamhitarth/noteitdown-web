@@ -139,6 +139,10 @@ var NoteItDown = function(options, elasticlunr){
 
         //Required to ensure name and order change reflects in list of notes
         debounce(initNotesList, 500)(noteRef.key, uid);
+
+        //Update search index
+        indexForSearch(noteRef.key, uid);
+
       });
 
       //Focus on the note and set cursor to end of any text in the note
@@ -233,6 +237,20 @@ var NoteItDown = function(options, elasticlunr){
     }
   }
 
+  function indexForSearch(noteKey, uid) {
+    let headless = new Firepad.Headless(fireDb.ref(`notes/${noteKey}`));
+    headless.getText((text) => {
+      elunrIndex.updateDoc({
+        'noteRef': noteKey,
+        'noteText': text
+      }, false);
+      headless.dispose();
+
+      //Store the index in Firebase
+      fireDb.ref(`users/${uid}/searchIndex`).set(JSON.stringify(elunrIndex.toJSON()));
+    });
+  }
+
   /**
    * initApp handles setting up UI event listeners and registering Firebase auth listeners:
    *  - firebase.auth().onAuthStateChanged: This listener is called when the user is signed in or
@@ -301,7 +319,9 @@ var NoteItDown = function(options, elasticlunr){
               searchBox.addEventListener('keyup', debounce((e) => {
                 let searchStr = e.target.value.trim();
                 if(searchStr.length > 1){
-                  let results = elunrIndex.search(searchStr);
+                  let results = elunrIndex.search(searchStr, {
+                    expand: true
+                  });
                   notesList.style.display = 'none';
                   searchResultsList.innerHTML = '';
                   searchResultsList.style.display = 'block';
@@ -317,23 +337,13 @@ var NoteItDown = function(options, elasticlunr){
               }, 500));
             }else{
               //Create new index
-              elunrIndex = elasticlunr(function(){
+              elunrIndex = elunrIndex || elasticlunr(function(){
                 this.addField('noteText');
                 this.setRef('noteRef');
               });
               //For each of the user's notes
               fireDb.ref(`users/${uid}/notes`).on('child_added', (snapshot) => {
-                let headless = new Firepad.Headless(fireDb.ref(`notes/${snapshot.key}`));
-                headless.getText((text) => {
-                  elunrIndex.addDoc({
-                    'noteRef': snapshot.key,
-                    'noteText': text
-                  });
-                  headless.dispose();
-
-                  //Store the index in Firebase
-                  fireDb.ref(`users/${uid}/searchIndex`).set(JSON.stringify(elunrIndex.toJSON()));
-                });
+                indexForSearch(snapshot.key, uid);
               });
             }
           });
